@@ -1,24 +1,24 @@
 import {Graphony} from '../Graphony';
 
 describe('on()', () => {
-  let asf;
+  let graphony;
 
   before(() => {
-    asf = new Graphony();
+    graphony = new Graphony();
   });
 
   after(() => {
-    asf.reset();
+    graphony.reset();
   });
 
   it('should be created when Graphony is instantiated', () => {
-    expect(asf.on).to.exist;
+    expect(graphony.on).to.exist;
   });
 
   it(`should get an updated value from an object`, () => {
     let set = {name: 'foo'};
     let change = {name: 'bar'};
-    asf
+    graphony
       .get()
       .set(set)
       .on(val => {
@@ -31,7 +31,7 @@ describe('on()', () => {
     let original = [{name: 'foo'}];
     let change = {name: 'bar'};
 
-    asf
+    graphony
       .get()
       .set(original)
       .on(val => {
@@ -46,7 +46,7 @@ describe('on()', () => {
   it(`should get an updated value from an array`, () => {
     let original = {name: 'foo'};
     let change = {name: 'bar'};
-    asf
+    graphony
       .get()
       .set([])
       .push(original)
@@ -61,7 +61,7 @@ describe('on()', () => {
 
   it('should get the value of an object stored by reference', () => {
     let obj = {name: 'foo'};
-    asf
+    graphony
       .get()
       .get('rob')
       .set(obj)
@@ -73,7 +73,7 @@ describe('on()', () => {
   });
 
   it(`should return a static path that can be assigned to a variable`, () => {
-    const user = asf.get().get('machines').get('foo').get('users').get('rob');
+    const user = graphony.get().get('machines').get('foo').get('users').get('rob');
     user.once(val => !val ? user.set({givenName: 'Rob', surname: "Hicks"}) : console.log('once::val', val));
   });
 });

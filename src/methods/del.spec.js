@@ -1,26 +1,26 @@
 import { Graphony } from '../Graphony';
 
 describe('del()', () => {
-  let as;
+  let graphony;
 
   beforeEach(() => {
-    as = new Graphony();
+    graphony = new Graphony();
   });
 
   afterEach(() => {
-    as.reset();
+    graphony.reset();
   });
 
   it('should be created when Graphony is instantiated', () => {
-    expect(as.del).to.exist;
+    expect(graphony.del).to.exist;
   });
 
   it('should delete an object stored at the root of the state manager', () => {
-    as.get().set({ name: 'foo', location: 'bar' }).del().once((val) => expect(val).to.be.null);
+    graphony.get().set({ name: 'foo', location: 'bar' }).del().once((val) => expect(val).to.be.null);
   });
 
   it('should delete an object stored deeply nested ', () => {
-    as
+    graphony
       .get()
       .get('users')
       .get('joe')
@@ -30,7 +30,7 @@ describe('del()', () => {
   });
 
   it('should delete an array stored at the root of the db', () => {
-    as
+    graphony
       .get()
       .set([{ name: 'foo', location: 'bar' }])
       .del()
@@ -38,7 +38,7 @@ describe('del()', () => {
   });
 
   it('should delete an array stored deeply in the db', () => {
-    as
+    graphony
       .get()
       .get('users')
       .get('joe')

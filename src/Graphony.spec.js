@@ -5,49 +5,49 @@ import { expect } from 'chai';
 describe('Graphony', () => {
   const url = baseUrl().replace('8080', '8081').replace('http', 'ws');
   const wsc = new WebSocket(url)
-  let as;
+  let graphony;
   before(() => {
-    as = new Graphony({wsc});
+    graphony = new Graphony({wsc});
   });
   after(() => {
-    as.reset();
+    graphony.reset();
   });
 
   it('when instantiated should have certain properties', () => {
-    expect(as.del).to.be.an('function');
-    expect(as.get).to.be.an('function');
-    // expect(as.on).to.be.an('function');
-    expect(as.once).to.be.an('function');
-    // expect(as.pop).to.be.an('function');
-    // expect(as.put).to.be.an('function');
-    expect(as.put).to.be.an('function');
-    expect(as.set).to.be.an('function');
-    // expect(as.shift).to.be.an('function');
-    // expect(as.splice).to.be.an('function');
-    // expect(as.unshift).to.be.an('function');
+    expect(graphony.del).to.be.an('function');
+    expect(graphony.get).to.be.an('function');
+    // expect(graphony.on).to.be.an('function');
+    expect(graphony.once).to.be.an('function');
+    // expect(graphony.pop).to.be.an('function');
+    // expect(graphony.put).to.be.an('function');
+    expect(graphony.put).to.be.an('function');
+    expect(graphony.set).to.be.an('function');
+    // expect(graphony.shift).to.be.an('function');
+    // expect(graphony.splice).to.be.an('function');
+    // expect(graphony.unshift).to.be.an('function');
   });
 
   it('should get a node if it exists', () => {
-    as.get();
-    expect(as.nodes.get('root')).to.be.ok;
+    graphony.get();
+    expect(graphony.nodes.get('root')).to.be.ok;
   });
 
   it('should get a Map of nodes', () => {
-    as
+    graphony
       .get()
       .get('user')
       .get('rob');
 
-    expect(as.nodes.size()).to.be.equal(3);
+    expect(graphony.nodes.size()).to.be.equal(3);
   });
 
   it('should connect to a server', () => {
-    expect(as.wsc).to.exist;
+    expect(graphony.wsc).to.exist;
   });
 
   it(`should set a node value`, () => {
     const obj = {name: 'rob'};
-    as
+    graphony
       .get()
       .get('users')
       .get('rob')

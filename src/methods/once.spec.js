@@ -1,22 +1,22 @@
 import { Graphony } from '../Graphony';
 
 describe('once()', () => {
-  let as;
+  let graphony;
 
   beforeEach(() => {
-    as = new Graphony();
+    graphony = new Graphony();
   });
   afterEach(async () => {
-    await as.reset();
+    await graphony.reset();
   });
 
   it('should be created when Graphony is instantiated', () => {
-    expect(as.once).to.exist;
+    expect(graphony.once).to.exist;
   });
 
   it('should get the value of an object stored at the root', () => {
     const obj = { name: 'foo' };
-    as
+    graphony
       .get()
       .set(obj)
       .once((val) => expect(val).to.be.eql(obj));
@@ -24,7 +24,7 @@ describe('once()', () => {
 
   it('should get the value of deeply stored object', () => {
     const obj = { name: 'foo' };
-    as
+    graphony
       .get('users')
       .get('rob')
       .set(obj)
@@ -33,7 +33,7 @@ describe('once()', () => {
 
   it('should get the value of an object stored at the root', () => {
     const obj = { name: 'foo', location: 'bar' };
-    as
+    graphony
       .get()
       .set(obj)
       .once((val) => expect(val).to.be.eql(obj));
@@ -41,7 +41,7 @@ describe('once()', () => {
 
   it('should get the value of a deeply nested object', () => {
     const obj = { name: 'foo', location: 'bar' };
-    as
+    graphony
       .get('users')
       .get('rob')
       .set(obj)
@@ -50,7 +50,7 @@ describe('once()', () => {
 
   it('should get the value of an object stored by reference', () => {
     const obj = { name: 'rob' };
-    as
+    graphony
       .get()
       .del()
       .get('rob')

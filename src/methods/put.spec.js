@@ -1,26 +1,26 @@
 import { Graphony } from '../Graphony';
 
 describe('put()', () => {
-  let as;
+  let graphony;
   const sObject = { name: 'foo' };
   const nObject = { name: 'foo', address: { city: 'bar', state: 'baz', region: { name: 'south america' } } };
 
   beforeEach(() => {
-    as = new Graphony();
+    graphony = new Graphony();
   });
   afterEach(() => {
-    as.reset();
+    graphony.reset();
   });
 
   it('should be created when Graphony is instantiated', () => {
-    expect(as.put).to.exist;
+    expect(graphony.put).to.exist;
   });
 
   it('should patch an object', () => {
     const set = { name: 'foo' };
     const put = { location: 'bar' };
     const obj = { name: 'foo', location: 'bar' };
-    as
+    graphony
       .get()
       .set(set)
       .put(put)
@@ -31,7 +31,7 @@ describe('put()', () => {
     const set = { name: 'foo' };
     const put = { location: 'bar' };
     const obj = { name: 'foo', location: 'bar' };
-    as
+    graphony
       .get()
       .get('users')
       .get('rob')
