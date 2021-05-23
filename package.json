@@ -11,7 +11,7 @@
     "start": "run-p server dev"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "idb-keyval": "^5.0.5",
     "jsonwebtoken": "^8.5.1",
