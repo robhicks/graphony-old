@@ -1,0 +1,5 @@
+dist
+test
+**/*.spec.js
+public
+index.js

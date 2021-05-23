@@ -1,0 +1,12 @@
+import '../src/Graphony.spec.js';
+import '../src/Node.spec.js';
+import '../src/methods/del.spec.js';
+import '../src/methods/get.spec.js';
+import '../src/methods/on.spec.js';
+import '../src/methods/once.spec.js';
+import '../src/methods/push.spec.js';
+import '../src/methods/put.spec.js';
+import '../src/methods/set.spec.js';
+import '../src/utils/EventEmitter.spec.js';
+import '../src/utils/IdbKeyValStore.spec.js';
+import '../src/utils/merge.spec.js';

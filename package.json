@@ -1,0 +1,38 @@
+{
+  "name": "graphony",
+  "version": "1.0.0",
+  "description": "",
+  "module": "src/index.js",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -cw",
+    "server": "npx nodemon test/server.js",
+    "start": "run-p server dev"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "idb-keyval": "^5.0.5",
+    "jsonwebtoken": "^8.5.1",
+    "level": "^7.0.0",
+    "ws": "^7.4.5"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
+    "chai": "^4.3.4",
+    "del": "^6.0.0",
+    "eslint": "^7.26.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.23.2",
+    "eslint-plugin-json-format": "^2.0.1",
+    "mocha": "^8.4.0",
+    "nodemon": "^2.0.7",
+    "npm-run-all": "^4.1.5",
+    "rollup": "^2.48.0",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-live-server": "^2.0.0",
+    "sinon": "^10.0.0"
+  }
+}
