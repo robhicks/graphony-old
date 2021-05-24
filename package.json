@@ -1,8 +1,8 @@
 {
   "name": "graphony",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "",
-  "module": "src/index.js",
+  "module": "src/Graphony.js",
   "main": "index.js",
   "scripts": {
     "build": "rollup -c",
