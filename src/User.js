@@ -48,4 +48,12 @@ export default class User {
       this.wsc.send({ action: 'LOGOUT', data: { id: this.uid } });
     }
   }
+
+  updateProfile(data) {
+    this.get()
+      .get('users')
+      .get(this.uid)
+      .get('profile')
+      .put(data);
+  }
 }
