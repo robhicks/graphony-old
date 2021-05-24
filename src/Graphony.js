@@ -20,14 +20,17 @@ export class Graphony {
     this.options = options;
     this.wsc = options.wsc;
     this.wss = options.wss;
+    this.uuid = uuid();
 
     this.socket = options.socket;
     this.events = new EventEmitter({ singleton: true, socket: this.socket });
 
     if (this.wsc || this.isBrowser) {
       this.store = options.db ? new Storage(options.db) : new Storage(new IdbKeyValStore());
+      this.wsc.nodes = this.nodes;
     } else if (this.wss) {
       this.store = this.wss.store;
+      this.wss.nodes = this.nodes;
     }
 
     this.user = new User(this);
@@ -35,13 +38,12 @@ export class Graphony {
     return this;
   }
 
-  async getUuid() {
-    if (this.uuid) return this.uuid;
-    const u = await this.store.get('uuid');
-    if (u) this.uuid = u;
-    else this.uuid = uuid();
+  get uuid() {
+    return this._uuid;
+  }
 
-    return this.uuid;
+  set uuid(val) {
+    this._uuid = val;
   }
 
   async reset() {
