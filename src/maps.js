@@ -4,10 +4,7 @@ export const founds = new Map();
 
 export const getNodes = () => nodes;
 
-export const getNode = (path) => {
-  console.log('nodes', nodes);
-  return nodes.get(path);
-};
+export const getNode = (path) => nodes.get(path);
 
 export const nodeExists = (path) => nodes.has(path);
 
@@ -22,6 +19,6 @@ export const clearNodes = () => nodes.clear();
 
 export const numberOfNodes = () => nodes.size;
 
-// setInterval(() => {
-//   console.log('nodes', nodes);
-// }, 100);
+setInterval(() => {
+  console.log('nodes', nodes);
+}, 1000);
