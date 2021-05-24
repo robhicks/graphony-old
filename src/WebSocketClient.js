@@ -2,59 +2,74 @@ import { uuid } from './utils/uuid';
 
 const autoReconnectInterval = 2000;
 
+const deserialize = (payload) => JSON.parse(payload);
+const serialize = (payload) => JSON.stringify(payload);
+
 export class WebSocketClient {
-  constructor(ctx, wsc) {
-    this.ctx = ctx;
+  constructor(url) {
     this.intervalId = null;
     this.requestQue = [];
-    this.url = wsc.url;
-    if (wsc.url && wsc.url.includes('ws')) {
-      this.connect();
-    }
+    this.url = url;
+    this.connect();
   }
 
   connect() {
-    try {
-      this.socket = new WebSocket(this.url);
-      this.socket.onclose = (ev) => {
-        switch (ev) {
-        case 1000:
-          // eslint-disable-next-line
-          console.log('WebSocket closed normally');
-          break;
-        default:
-          // eslint-disable-next-line
-          console.log('WebSocket closed abnormally');
-          this.reconnect();
-          break;
-        }
-      };
+    this.socket = new WebSocket(this.url);
+    this.socket.addEventListener('close', this.onClose.bind(this));
+    this.socket.addEventListener('error', this.onError.bind(this));
+    this.socket.addEventListener('message', this.onMessage.bind(this));
+    this.socket.addEventListener('open', this.onOpen.bind(this));
+  }
 
-      this.socket.onerror = () => this.reconnect();
-      this.socket.onmessage = (ev) => {
-        const data = JSON.parse(ev.data);
-        const { action, data: dta, path } = data;
-        if (action === 'RESPONSE') {
-          const node = this.ctx.nodes.get(path);
-          const d = JSON.parse(dta);
-          // const node = getNode(path);
-          console.log('node', node);
-        }
-      };
-      this.socket.onopen = () => {
-        this.socket.send(JSON.stringify({ action: 'registerClient', data: { clientId: uuid() } }));
-      };
-      if (this.intervalId) clearInterval(this.intervalId);
-    } catch (e) {
+  connecting() {
+    return this?.socket?.readyState === 0;
+  }
+
+  onClose(ev) {
+    switch (ev) {
+    case 1000:
+      // eslint-disable-next-line
+        console.log('WebSocket closed normally');
+      break;
+    default:
+      // eslint-disable-next-line
+        console.log('WebSocket closed abnormally');
       this.reconnect();
+      break;
     }
+  }
+
+  onError(evt) {
+    // eslint-disable-next-line
+    console.warn('evt', evt);
+    this.reconnect();
+  }
+
+  onMessage(msg) {
+    const { data } = msg;
+    const { data: { message }, path } = deserialize(data);
+    const node = this.nodes.get(path);
+    if (node) node.setValue(message);
+  }
+
+  onOpen() {
+    if (this.intervalId) clearInterval(this.intervalId);
+    this.socket.send(serialize({ action: 'REGISTER_CLIENT', data: { clientId: uuid() } }));
+  }
+
+  ready() {
+    return this?.socket?.readyState === 1;
   }
 
   reconnect() {
     if (this.intervalId) return;
     this.intervalId = setInterval(() => {
       console.log(`WebSocketClient: retry to ${this.url} in ${autoReconnectInterval}ms`);
-      if (this.socket && this.socket.readyState !== '1' && this.socket.readyState !== 0) this.connect();
+      if (!this.ready() && !this.connecting()) this.connect();
     }, autoReconnectInterval);
+  }
+
+  send(payload) {
+    this.socket.send(serialize(payload));
   }
 }

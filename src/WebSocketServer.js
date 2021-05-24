@@ -19,44 +19,38 @@ export class WebSocketServer {
         // do authentication here
       });
       this.wss.on('connection', (ws) => {
-        ws.on('message', (message) => {
-          const { action, data } = JSON.parse(message);
-          if (action === 'registerClient' && this.wss.clients.has(ws) && !ws.clientId) {
+        ws.on('message', async (msg) => {
+          const message = JSON.parse(msg);
+          // console.log('message', message);
+          const { action } = message;
+          const { path } = message;
+          const { data } = message;
+
+          switch (action) {
+          case 'REGISTER_CLIENT':
             Object.assign(ws, { clientId: data.clientId, paths: new Set() });
-          }
-        });
-      });
-      this.wss.on('connection', (ws) => {
-        ws.on('message', (message) => {
-          const { action, path } = JSON.parse(message);
-          if (action === 'registerNode' && this.wss.clients.has(ws)) {
+            break;
+          case 'REGISTER_NODE':
             ws.paths.add(path);
-          }
-        });
-      });
-      this.wss.on('connection', (ws) => {
-        ws.on('message', async (message) => {
-          const { action, path } = JSON.parse(message);
-          if (action === 'GET' && this.wss.clients.has(ws)) {
+            break;
+          case 'GET': {
             const val = await this.store.get(path);
-            if (val) {
-              const payload = { action: 'RESPONSE', path, data: val };
-              ws.send(JSON.stringify(payload));
-            }
+            const payload = { action: 'RESPONSE', path, data: val || {} };
+            ws.send(JSON.stringify(payload));
+            break;
           }
-        });
-      });
-      this.wss.on('connection', (ws) => {
-        ws.on('message', (message) => {
-          const { action, data, path } = JSON.parse(message);
-          if (action === 'PUT') {
+          case 'PUT': {
             this.store.put(path, data);
+            this.wss.clients.forEach((client) => {
+              if (client !== ws && client.paths && client.paths.has(path)) {
+                client.send(message);
+              }
+            });
+            break;
           }
-          this.wss.clients.forEach((client) => {
-            if (client !== ws && client.paths && client.paths.has(path)) {
-              client.send(message);
-            }
-          });
+
+          default: break;
+          }
         });
       });
     } catch (e) {
