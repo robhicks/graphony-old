@@ -12,3 +12,4 @@ test-db
 public/tests.js
 dist
 GraphonyDb
+index.js
