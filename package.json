@@ -1,12 +1,13 @@
 {
   "name": "graphony",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "",
-  "module": "src/Graphony.js",
+  "module": "dist/graphony.js",
   "main": "index.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -cw",
+    "postinstall": "npx rollup -c",
     "server": "npx nodemon test/server.js",
     "start": "run-p server dev"
   },
