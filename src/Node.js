@@ -14,7 +14,6 @@ export default class Node {
     this.wss = ctx.wss;
     this.register();
     this.load();
-    this.listen();
   }
 
   del() {
@@ -26,24 +25,12 @@ export default class Node {
     return this.store.get(this.path);
   }
 
-  listen() {
-    if (this.wsc?.socket) {
-      this.wsc.socket.addEventListener('message', ({ action, path, data }) => {
-        console.log('action', action);
-        console.log('path', path);
-        console.log('data', data);
-      });
-    }
-  }
-
   async load() {
     try {
       const val = await this.getValue();
-      if (this.wsc?.socket) {
-        this.wsc.socket.addEventListener('open', () => {
-          const get = { action: 'GET', path: this.path };
-          this.wsc.socket.send(JSON.stringify(get));
-        });
+      if (this.wsc.ready()) {
+        const payload = { action: 'GET', path: this.path };
+        this.wsc.send(payload);
       }
       this.events.emit(this.path, val);
     } catch (err) {
@@ -52,11 +39,9 @@ export default class Node {
   }
 
   register() {
-    if (this.wsc?.socket) {
-      this.wsc.socket.addEventListener('open', () => {
-        const get = { action: 'register', path: this.path };
-        this.wsc.socket.send(JSON.stringify(get));
-      });
+    if (this.wsc.ready()) {
+      const payload = { action: 'REGISTER_NODE', path: this.path };
+      this.wsc.send(payload);
     }
   }
 
