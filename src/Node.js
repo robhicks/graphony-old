@@ -2,6 +2,8 @@ import { uuid } from './utils/uuid';
 import { deepEquals } from './utils/deepEquals';
 import isBrowser from './utils/isBrowser';
 
+const noop = () => {};
+
 export default class Node {
   constructor(path, ctx) {
     this.browser = isBrowser;
@@ -28,18 +30,18 @@ export default class Node {
   async load() {
     try {
       const val = await this.getValue();
-      if (this.wsc.ready()) {
+      this.events.emit(this.path, val);
+      if (this.wsc && this.wsc.ready && this.wsc.ready()) {
         const payload = { action: 'GET', path: this.path };
         this.wsc.send(payload);
       }
-      this.events.emit(this.path, val);
     } catch (err) {
       // eat it
     }
   }
 
   register() {
-    if (this.wsc.ready()) {
+    if (this.wsc && this.wsc.ready && this.wsc.ready()) {
       const payload = { action: 'REGISTER_NODE', path: this.path };
       this.wsc.send(payload);
     }

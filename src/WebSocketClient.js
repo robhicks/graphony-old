@@ -64,6 +64,7 @@ export class WebSocketClient {
   reconnect() {
     if (this.intervalId) return;
     this.intervalId = setInterval(() => {
+      // eslint-disable-next-line
       console.log(`WebSocketClient: retry to ${this.url} in ${autoReconnectInterval}ms`);
       if (!this.ready() && !this.connecting()) this.connect();
     }, autoReconnectInterval);

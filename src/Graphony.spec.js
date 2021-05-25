@@ -1,10 +1,11 @@
 import { Graphony } from './Graphony';
+import { WebSocketClient } from './WebSocketClient'
 import baseUrl from './utils/baseUrl';
 import { expect } from 'chai';
 
 describe('Graphony', () => {
   const url = baseUrl().replace('8080', '8081').replace('http', 'ws');
-  const wsc = new WebSocket(url)
+  const wsc = new WebSocketClient(url)
   let graphony;
   before(() => {
     graphony = new Graphony({wsc});

@@ -25,9 +25,9 @@ export class Graphony {
     this.socket = options.socket;
     this.events = new EventEmitter({ singleton: true, socket: this.socket });
 
-    if (this.wsc || this.isBrowser) {
+    if (this.isBrowser) {
       this.store = options.db ? new Storage(options.db) : new Storage(new IdbKeyValStore());
-      this.wsc.nodes = this.nodes;
+      if (this.wsc) this.wsc.nodes = this.nodes;
     } else if (this.wss) {
       this.store = this.wss.store;
       this.wss.nodes = this.nodes;

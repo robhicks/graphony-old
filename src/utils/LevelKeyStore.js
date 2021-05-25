@@ -14,7 +14,7 @@ export class LevelKeyStore {
   }
 
   async del(key) {
-    return this.dbdel(key);
+    return this.db.del(key);
   }
 
   async get(key) {
