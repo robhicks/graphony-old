@@ -1,6 +1,6 @@
 {
   "name": "graphony",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "",
   "module": "dist/graphony.js",
   "main": "index.js",
