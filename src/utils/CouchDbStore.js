@@ -1,14 +1,33 @@
-module.exports = class CouchDbStore {
-  constructor() {
-    this.nano = require('nano')('http://localhost:5984');
+import nano from 'nano';
+
+export default class CouchDbStore {
+  constructor(url) {
+    this.nano = nano(url);
     this.connect();
   }
 
-  async connect() {
+  clear() {}
+
+  del() {}
+
+  async get(key) {
     try {
-      this.db = await this.nano.db.use('graphony');
-    } catch (error) {
-      console.log('errors', errors);
+      const val = await this.db.get(key);
+      return val;
+    } catch (err) {
+      return null;
     }
   }
-};
+
+  put() {}
+
+  set() {}
+
+  async connect() {
+    try {
+      this.db = this.nano.db.use('graphony');
+    } catch (error) {
+      this.db = this.nano.db.create('graphony');
+    }
+  }
+}
