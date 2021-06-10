@@ -1,5 +1,6 @@
 import '../src/Graphony.spec.js';
 import '../src/Node.spec.js';
+import '../src/User.spec.js';
 import '../src/methods/del.spec.js';
 import '../src/methods/get.spec.js';
 import '../src/methods/on.spec.js';

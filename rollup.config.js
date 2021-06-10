@@ -51,4 +51,15 @@ export default [
       format: 'es',
     },
   },
+  {
+    input: 'test/server-tests.js',
+    plugins: [
+      nodeResolve(),
+      commonJs(),
+    ],
+    output: {
+      file: 'test/server-test-bundle.js',
+      format: 'cjs',
+    },
+  },
 ];

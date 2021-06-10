@@ -1,8 +1,8 @@
+import isEqual from 'lodash.isequal';
 import { uuid } from './utils/uuid';
-import { deepEquals } from './utils/deepEquals';
 import isBrowser from './utils/isBrowser';
 
-const noop = () => {};
+const utc = () => Math.floor(new Date().getTime() / 1000);
 
 export default class Node {
   constructor(path, ctx) {
@@ -14,25 +14,34 @@ export default class Node {
     this.store = ctx.store;
     this.wsc = ctx.wsc;
     this.wss = ctx.wss;
-    this.register();
+    this.user = ctx.user;
     this.load();
+    this.version = 0;
   }
 
-  del() {
+  async del() {
     this.events.clear();
-    this.store.del(this.path);
+    const stored = await this.getValue(true);
+    if (stored) this.store.del(this.path);
+    this.send('DEL');
   }
 
-  async getValue() {
-    return this.store.get(this.path);
+  async getValue(raw = false) {
+    const stored = await this.store.get(this.path);
+    this.version = stored?.version || this.version;
+    if (stored) {
+      if (raw) return stored;
+      return stored.value;
+    }
+    return null;
   }
 
   async load() {
     try {
-      const val = await this.getValue();
-      this.events.emit(this.path, val);
+      const val = await this.getValue(true);
+      this.events.emit(this.path, val?.value ? val.value : val);
       if (this.wsc && this.wsc.ready && this.wsc.ready()) {
-        const payload = { action: 'GET', path: this.path };
+        const payload = { action: 'GET', path: this.path, data: val };
         this.wsc.send(payload);
       }
     } catch (err) {
@@ -40,22 +49,30 @@ export default class Node {
     }
   }
 
-  register() {
-    if (this.wsc && this.wsc.ready && this.wsc.ready()) {
-      const payload = { action: 'REGISTER_NODE', path: this.path };
+  async send(action = 'GET') {
+    if (this?.wsc?.send) {
+      const val = await this.getValue(true);
+      const payload = { ...{ action, path: this.path }, ...val };
       this.wsc.send(payload);
     }
   }
 
-  async setValue(val) {
-    const value = await this.store.get(this.path);
-    if (!deepEquals(val, value)) {
-      await this.store.put(this.path, val, true);
+  async setValue(val, response) {
+    if (!response) {
+      const data = {
+        value: val,
+        path: this.path,
+        updated: utc(),
+        updatedBy: this.user.uid,
+        // eslint-disable-next-line no-plusplus
+        version: ++this.version,
+      };
+      this.store.put(this.path, data, true);
+      this.events.emit(this.path, data.value);
+      this.send('PUT');
+    } else {
+      this.store.put(this.path, response, true);
       this.events.emit(this.path, val);
-      if (this.wsc?.socket) {
-        const payload = { action: 'PUT', path: this.path, data: val };
-        this.wsc.socket.send(JSON.stringify(payload));
-      }
     }
   }
 }

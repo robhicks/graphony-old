@@ -1,16 +1,26 @@
+/* eslint-disable no-console */
+
 import { isObject } from './isObject';
 import { isArray } from './isArray';
-import { deepEquals } from './deepEquals';
-
-const defaultDbName = 'GraphonyDb';
 
 export class LevelKeyStore {
-  constructor(level, dbName) {
-    this.db = level(dbName || defaultDbName);
+  constructor(level, location, options = {}) {
+    this.level = level;
+    this.location = location;
+    this.options = options;
+    this.connect();
   }
 
   async clear() {
     return this.db.clear();
+  }
+
+  connect() {
+    try {
+      this.db = this.level(this.location, this.options);
+    } catch (error) {
+      console.error('level connection error', error);
+    }
   }
 
   async del(key) {
@@ -20,8 +30,9 @@ export class LevelKeyStore {
   async get(key) {
     try {
       const val = await this.db.get(key);
-      return val;
+      return JSON.parse(JSON.parse(val));
     } catch (err) {
+      // console.log('level get err', err);
       return null;
     }
   }
@@ -29,7 +40,6 @@ export class LevelKeyStore {
   async put(key, data, overwrite = false) {
     if (overwrite) return this.set(key, data);
     const d = await this.get(key);
-    if (deepEquals(d, data)) return;
     let dta;
     if (isArray(data) && isArray(d)) {
       dta = [...d, ...data];

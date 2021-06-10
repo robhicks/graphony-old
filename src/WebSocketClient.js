@@ -1,4 +1,5 @@
 import { uuid } from './utils/uuid';
+import Node from './Node';
 
 const autoReconnectInterval = 2000;
 
@@ -46,10 +47,20 @@ export class WebSocketClient {
   }
 
   onMessage(msg) {
+    // console.log('onMessage::msg', msg);
     const { data } = msg;
-    const { data: { message }, path } = deserialize(data);
-    const node = this.nodes.get(path);
-    if (node) node.setValue(message);
+    // console.log('onMessage::data', data);
+    const obj = deserialize(data);
+    // console.log('onMessage::obj', obj);
+
+    const { path } = obj;
+    // console.log('path', path);
+    const { value } = obj;
+    // console.log('value', value);
+    const node = this.nodes.get(path) || new Node(path, this.ctx);
+    // console.log('node', node);
+    delete Object.action;
+    if (value) node.setValue(value, obj);
   }
 
   onOpen() {
@@ -71,6 +82,7 @@ export class WebSocketClient {
   }
 
   send(payload) {
+    console.log('WebSocketClient::send::payload', payload);
     this.socket.send(serialize(payload));
   }
 }

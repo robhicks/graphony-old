@@ -17,7 +17,7 @@ describe('Graphony', () => {
   it('when instantiated should have certain properties', () => {
     expect(graphony.del).to.be.an('function');
     expect(graphony.get).to.be.an('function');
-    // expect(graphony.on).to.be.an('function');
+    expect(graphony.on).to.be.an('function');
     expect(graphony.once).to.be.an('function');
     // expect(graphony.pop).to.be.an('function');
     // expect(graphony.put).to.be.an('function');

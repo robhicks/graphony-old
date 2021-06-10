@@ -3,11 +3,13 @@ jwt = require('jsonwebtoken');
 const level = require('level');
 const { Graphony, LevelKeyStore, WebSocketServer } = require('../index.js');
 const ws = require('ws');
+const { resolve } = require('path');
+const root = process.cwd();
 
 const WebSocket = ws;
 const server = http.createServer();
 const wss = new WebSocket.Server({ server });
-const store = new LevelKeyStore(level);
+const store = new LevelKeyStore(level, resolve(root, 'GraphonyDb'));
 
 const wss1 = new WebSocketServer({
   port: 8081,

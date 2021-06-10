@@ -19,8 +19,8 @@ describe('Node', () => {
 
   describe('load()', () => {
     it('should get a value stored in the db', async () => {
-      await as.store.put('root', { name: 'rob' });
       const node = new Node('root', as);
+      await node.setValue({name: 'rob'})
       await node.load();
       const val = await node.getValue();
       expect(val).to.be.an('object');

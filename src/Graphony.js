@@ -27,14 +27,16 @@ export class Graphony {
 
     if (this.isBrowser) {
       this.store = options.db ? new Storage(options.db) : new Storage(new IdbKeyValStore());
-      if (this.wsc) this.wsc.nodes = this.nodes;
+      if (this.wsc) {
+        this.wsc.nodes = this.nodes;
+        this.wsc.ctx = this;
+      }
     } else if (this.wss) {
       this.store = this.wss.store;
       this.wss.nodes = this.nodes;
     }
 
     this.user = new User(this);
-
     return this;
   }
 

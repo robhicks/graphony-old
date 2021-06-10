@@ -1,14 +1,15 @@
 {
   "name": "graphony",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "",
   "module": "dist/graphony.js",
   "main": "index.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -cw",
+    "mocha:dev": "mocha --watch test/server-test-bundle.js",
     "postinstall": "npx rollup -c",
-    "server": "npx nodemon test/server.js",
+    "server": "npx nodemon -w index.js -w src/utils/LevelKeyStore.js -w test/server.js test/server.js",
     "start": "run-p server dev"
   },
   "author": "",
@@ -17,9 +18,12 @@
   },
   "license": "UNLICENSED",
   "dependencies": {
+    "brain.js": "^2.0.0-beta.2",
     "idb-keyval": "^5.0.5",
     "jsonwebtoken": "^8.5.1",
     "level": "^7.0.0",
+    "lodash.isequal": "^4.5.0",
+    "mongodb": "^3.6.9",
     "nano": "^9.0.3"
   },
   "devDependencies": {
@@ -27,17 +31,17 @@
     "@rollup/plugin-node-resolve": "^13.0.0",
     "chai": "^4.3.4",
     "del": "^6.0.0",
-    "eslint": "^7.27.0",
+    "eslint": "^7.28.0",
     "eslint-config-airbnb-base": "^14.2.1",
-    "eslint-plugin-import": "^2.23.3",
+    "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-json-format": "^2.0.1",
     "mocha": "^8.4.0",
     "nodemon": "^2.0.7",
     "npm-run-all": "^4.1.5",
-    "rollup": "^2.49.0",
+    "rollup": "^2.51.1",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-live-server": "^2.0.0",
-    "sinon": "^11.0.0",
-    "ws": "^7.4.5"
+    "sinon": "^11.1.1",
+    "ws": "^7.4.6"
   }
 }
