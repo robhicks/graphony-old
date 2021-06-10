@@ -1,11 +1,17 @@
-import isEqual from 'lodash.isequal';
 import { uuid } from './utils/uuid';
 import isBrowser from './utils/isBrowser';
 
 const utc = () => Math.floor(new Date().getTime() / 1000);
 
+const canRead = (currentUser, storedData) => currentUser === storedData.user
+  || storedData.readers.includes(currentUser)
+  || storedData.writers.includes(currentUser);
+
+const canWrite = (currentUser, storedData) => currentUser === storedData.user
+  || storedData.writers.includes(currentUser);
+
 export default class Node {
-  constructor(path, ctx) {
+  constructor(path, ctx, { readers = [], writers = [] } = []) {
     this.browser = isBrowser;
     this.server = !isBrowser;
     this.path = path;
@@ -14,7 +20,9 @@ export default class Node {
     this.store = ctx.store;
     this.wsc = ctx.wsc;
     this.wss = ctx.wss;
-    this.user = ctx.user;
+    this.owner = ctx.user.uid;
+    this.readers = readers;
+    this.writers = writers;
     this.load();
     this.version = 0;
   }
@@ -28,8 +36,10 @@ export default class Node {
 
   async getValue(raw = false) {
     const stored = await this.store.get(this.path);
+
     this.version = stored?.version || this.version;
-    if (stored) {
+
+    if (stored && canRead(this.owner, stored)) {
       if (raw) return stored;
       return stored.value;
     }
@@ -57,22 +67,28 @@ export default class Node {
     }
   }
 
+  storeEmitAndSend(data, includeNet = false) {
+    this.store.put(this.path, data, true);
+    this.events.emit(this.path, data.value);
+    if (includeNet) this.send('PUT');
+  }
+
   async setValue(val, response) {
-    if (!response) {
-      const data = {
-        value: val,
-        path: this.path,
-        updated: utc(),
-        updatedBy: this.user.uid,
-        // eslint-disable-next-line no-plusplus
-        version: ++this.version,
-      };
-      this.store.put(this.path, data, true);
-      this.events.emit(this.path, data.value);
-      this.send('PUT');
-    } else {
-      this.store.put(this.path, response, true);
-      this.events.emit(this.path, val);
-    }
+    const data = response || {
+      value: val,
+      owner: this.owner,
+      path: this.path,
+      readers: this.readers,
+      updated: utc(),
+      updatedBy: this.owner.uid,
+      writers: this.writers,
+      // eslint-disable-next-line no-plusplus
+      version: ++this.version,
+    };
+    const stored = await this.store.get(this.path);
+    if (stored && canWrite(this.owner, stored)) {
+      this.storeEmitAndSend(data, true);
+    } else if (response) this.storeEmitAndSend(data, true);
+    else this.storeEmitAndSend(data);
   }
 }

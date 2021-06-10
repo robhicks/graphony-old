@@ -1,3 +1,4 @@
+import { isArray } from './utils/isArray';
 import { uuid } from './utils/uuid';
 
 export default class User {
@@ -7,6 +8,7 @@ export default class User {
     this.uid = uuid();
     this.jwt = null;
     this.events.on('authChange', this.authChange);
+    this._permissions = [];
   }
 
   authChange(cb) {
@@ -70,5 +72,17 @@ export default class User {
   set authenticated(flag) {
     this._authenticated = flag;
     this.events.emit('authChange', this._authenticated);
+  }
+
+  get permissions() {
+    return this._permissions;
+  }
+
+  set permissions(perms = []) {
+    if (!isArray(perms)) throw new SyntaxError('permissions must be an array of strings');
+    perms.forEach((perm) => {
+      if (typeof perm !== 'string') throw new SyntaxError('permissions must contain only strings');
+    });
+    this._permissions = perms;
   }
 }

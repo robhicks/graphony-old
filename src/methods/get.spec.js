@@ -1,4 +1,6 @@
+import { expect } from 'chai';
 import { Graphony } from '../Graphony.js';
+import User from '../User'
 
 describe('get()', () => {
   let graphony;
@@ -45,4 +47,60 @@ describe('get()', () => {
     graphony = new Graphony({ wsc: { Client: WebSocket, url: 'ws://localhost:8081' } });
     graphony.get().get('user').set({ firstName: 'Rob', lastName: 'Hicks' });
   });
+
+  it('should assign readers and writers', async() => {
+    const reader = new User(graphony).uid
+    const writer = new User(graphony).uid
+    const readers = [reader];
+    const writers = [writer];
+    graphony.get('root', {readers, writers}).set({name: 'rob'})
+    const storedObject = await graphony.store.get('root');
+    console.log(`storedObject`, storedObject)
+    // expect(storedObject.readers).to.contain(reader)
+    // expect(storedObject.writers).to.contain(writer);
+  });
+
+  it('an owner can get the values of a path', () => {
+    const reader = new User(graphony).uid
+    const writer = new User(graphony).uid
+    const readers = [reader];
+    const writers = [writer];
+    graphony.get('root', { readers, writers }).set({ name: 'rob' }).once(val => expect(val.name).to.equal('rob'))
+  });
+
+  it('the value of a path cannot be read by a user who is not the owner, or a reader or writer', async() => {
+    const reader = new User(graphony).uid
+    const writer = new User(graphony).uid
+    const readers = [reader];
+    const writers = [writer];
+
+    const g1 = new Graphony();
+
+    graphony.get('root', { readers, writers }).set({ name: 'rob' })
+    g1.get().once(val => expect(val).to.be.null)
+  });
+
+  it('the value of a path can be read by a user who is a reader but not the owner', async () => {
+    const reader = new User(graphony).uid
+    const writer = new User(graphony).uid
+    const readers = [reader];
+    const writers = [writer];
+
+    const g1 = new Graphony();
+    g1.get('root', {readers}).on(val => expect(val.name).to.equal('rob'))
+    graphony.get('root', { readers, writers }).set({ name: 'rob' })
+  });
+
+  it('the value of a path can be read by a user who is a writer but not the owner', async () => {
+    const reader = new User(graphony).uid
+    const writer = new User(graphony).uid
+    const readers = [reader];
+    const writers = [writer];
+
+    const g1 = new Graphony();
+    g1.get('root', { writers }).on(val => expect(val.name).to.equal('rob'))
+    graphony.get('root', { readers, writers }).set({ name: 'rob' })
+  });
+
+
 });
