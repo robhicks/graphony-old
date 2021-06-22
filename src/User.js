@@ -1,11 +1,13 @@
 import { isArray } from './utils/isArray';
 import { uuid } from './utils/uuid';
+import encrypt from './utils/encrypt';
+import decrypt from './utils/decrypt';
 
 export default class User {
   constructor(ctx) {
     this._authenticated = false;
     Object.assign(this, ctx);
-    this.uid = uuid();
+    this.uuid = uuid();
     this.jwt = null;
     this.events.on('authChange', this.authChange);
     this._permissions = [];
@@ -45,8 +47,12 @@ export default class User {
   }
 
   login(username, password) {
-    if (this.isBrowser && this?.wsc?.send) {
-      this.wsc.send({ action: 'LOGIN', data: { username, password, id: this.uid } });
+    if (this.isBrowser) {
+      if (this?.wsc && this.wsc.ready()) {
+        this.wsc.send({ action: 'LOGIN', data: { username, password, id: this.uid } });
+      } else {
+        // log user in
+      }
     }
   }
 
@@ -85,4 +91,15 @@ export default class User {
     });
     this._permissions = perms;
   }
+
+  get uid() {
+    return this.uuid;
+  }
+
+  set uid(uid) {
+    this.uuid = uid;
+  }
 }
+
+User.prototype.encrypt = encrypt;
+User.prototype.decrypt = decrypt;

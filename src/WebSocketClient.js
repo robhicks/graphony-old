@@ -9,7 +9,7 @@ const serialize = (payload) => JSON.stringify(payload);
 export class WebSocketClient {
   constructor(url) {
     this.intervalId = null;
-    this.requestQue = [];
+    this.retryIntervalId = null;
     this.url = url;
     this.connect();
   }
@@ -47,20 +47,18 @@ export class WebSocketClient {
   }
 
   onMessage(msg) {
-    // console.log('onMessage::msg', msg);
+    console.log('Client::onMessage::msg', msg);
     const { data } = msg;
     // console.log('onMessage::data', data);
     const obj = deserialize(data);
-    // console.log('onMessage::obj', obj);
+    console.log('onMessage::obj', obj);
 
     const { path } = obj;
     // console.log('path', path);
     const { value } = obj;
-    // console.log('value', value);
     const node = this.nodes.get(path) || new Node(path, this.ctx);
     // console.log('node', node);
-    delete Object.action;
-    if (value) node.setValue(value, obj);
+    if (value) node.value = obj;
   }
 
   onOpen() {
@@ -82,7 +80,13 @@ export class WebSocketClient {
   }
 
   send(payload) {
-    console.log('WebSocketClient::send::payload', payload);
-    this.socket.send(serialize(payload));
+    if (this.ready()) {
+      // console.log('WebSocketClient::send::payload', payload);
+      this.socket.send(serialize(payload));
+    } else {
+      setTimeout(() => {
+        this.send(payload);
+      }, 500);
+    }
   }
 }

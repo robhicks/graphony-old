@@ -23,8 +23,11 @@ export default function get(path = 'root', { readers = [], writers = [] } = {}) 
       this.currentPath = `${this.currentPath || 'root'}.${path}`;
     }
   }
-  const node = new Node(this.currentPath, this, { readers, writers });
-  this.nodes.add(this.currentPath, node);
+
+  if (!this.nodes.has(this.currentPath)) {
+    const node = new Node(this.currentPath, this, { readers, writers });
+    this.nodes.add(this.currentPath, node);
+  }
 
   return this;
 }

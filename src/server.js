@@ -1,3 +1,3 @@
 export { Graphony } from './Graphony';
-export { WebSocketServer } from './WebSocketServer';
+export { WebsocketServer } from './WebsocketServer';
 export { LevelKeyStore } from './utils/LevelKeyStore';

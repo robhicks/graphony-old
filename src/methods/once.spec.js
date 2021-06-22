@@ -52,14 +52,10 @@ describe('once()', () => {
     const obj = { name: 'rob' };
     graphony
       .get()
-      .del()
-      .get('rob')
-      .del()
-      .set(obj)
-      .get()
       .get('users')
+      .get('rob')
       .set([])
-      .push('root.rob')
+      .push(obj)
       .once((val) => expect(val).to.be.eql([obj]));
   });
 });

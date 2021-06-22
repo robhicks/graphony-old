@@ -3,16 +3,8 @@ function argValidator(event, listener) {
   if (typeof listener !== 'function') throw TypeError('listener must be function');
 }
 
-const eventEmitterMap = new Map();
-
 export class EventEmitter {
-  constructor(options = {}) {
-    this.ctx = options.ctx;
-    this.socket = options.socket;
-    if (options.singleton) {
-      if (eventEmitterMap.has('instance')) return eventEmitterMap.get('instance');
-      eventEmitterMap.set('instance', this);
-    }
+  constructor() {
     this.events = new Map();
   }
 

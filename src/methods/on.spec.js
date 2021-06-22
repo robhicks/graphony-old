@@ -1,13 +1,14 @@
+import { expect } from 'chai';
 import {Graphony} from '../Graphony';
 
 describe('on()', () => {
   let graphony;
 
-  before(() => {
+  beforeEach(() => {
     graphony = new Graphony();
   });
 
-  after(() => {
+  afterEach(() => {
     graphony.reset();
   });
 
@@ -22,6 +23,7 @@ describe('on()', () => {
       .get()
       .set(set)
       .on(val => {
+        // console.log(`val`, val)
         expect(val).to.be.eql(change);
       })
       .put(change);
@@ -30,11 +32,11 @@ describe('on()', () => {
   it(`should get an updated value from an array`, () => {
     let original = [{name: 'foo'}];
     let change = {name: 'bar'};
-
     graphony
       .get()
       .set(original)
       .on(val => {
+        // console.log(`val`, val)
         expect(val).to.be.an('array');
         expect(val).to.have.length(2);
         expect(val[0]).to.be.eql({name: 'foo'});
@@ -51,12 +53,13 @@ describe('on()', () => {
       .set([])
       .push(original)
       .on(val => {
+        // console.log(`val`, val)
         expect(val).to.be.an('array');
         expect(val).to.have.length(2);
         expect(val[0]).to.be.eql(original);
         expect(val[1]).to.be.eql(change);
       })
-      .push(change);
+      .push(change)
   });
 
   it('should get the value of an object stored by reference', () => {
@@ -68,12 +71,21 @@ describe('on()', () => {
       .get()
       .get('users')
       .set([])
-      .on(val => expect(val).to.be.eql([obj]))
+      .on(val => {
+        // console.log(`val`, val)
+        expect(val).to.be.eql([obj])
+      })
       .push('root.rob');
   });
 
   it(`should return a static path that can be assigned to a variable`, () => {
     const user = graphony.get().get('machines').get('foo').get('users').get('rob');
-    user.once(val => !val ? user.set({givenName: 'Rob', surname: "Hicks"}) : console.log('once::val', val));
+    user
+      .set({ givenName: 'Rob', surname: "Hicks" })
+      .once(val => {
+        // console.log(`val`, val)
+        expect(val.givenName).to.equal('Rob')
+        expect(val.surname).to.equal('Hicks')
+      })
   });
 });

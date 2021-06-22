@@ -21,6 +21,10 @@ export default class Nodes {
     return this.nodes.get(path);
   }
 
+  has(path) {
+    return this.nodes.has(path);
+  }
+
   nodes() {
     return this.nodes;
   }

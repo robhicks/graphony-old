@@ -28,7 +28,7 @@ export default class IdbKeyValStore {
   async put(key, data, overwrite = false) {
     if (overwrite) return this.set(key, data);
     const d = await this.get(key);
-    if (deepEquals(d, data)) return;
+    if (deepEquals(d, data)) return data;
     let dta;
     if (isArray(data) && isArray(d)) {
       dta = [...d, ...data];

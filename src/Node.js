@@ -1,14 +1,19 @@
 import { uuid } from './utils/uuid';
 import isBrowser from './utils/isBrowser';
+import { deepEquals } from './utils/deepEquals';
+import { isArray } from './utils/isArray';
 
 const utc = () => Math.floor(new Date().getTime() / 1000);
 
-const canRead = (currentUser, storedData) => currentUser === storedData.user
+const canRead = (currentUser, storedData) => currentUser === storedData.owner
   || storedData.readers.includes(currentUser)
+  || storedData.readers.includes('all')
   || storedData.writers.includes(currentUser);
 
-const canWrite = (currentUser, storedData) => currentUser === storedData.user
+const canWrite = (currentUser, storedData) => currentUser === storedData.owner
   || storedData.writers.includes(currentUser);
+
+const refRegX = new RegExp('^ref:');
 
 export default class Node {
   constructor(path, ctx, { readers = [], writers = [] } = []) {
@@ -16,79 +21,92 @@ export default class Node {
     this.server = !isBrowser;
     this.path = path;
     this.events = ctx.events;
+    this.nodes = ctx.nodes;
     this.nodeId = uuid();
     this.store = ctx.store;
+    this.user = ctx.user;
     this.wsc = ctx.wsc;
     this.wss = ctx.wss;
-    this.owner = ctx.user.uid;
     this.readers = readers;
     this.writers = writers;
-    this.load();
     this.version = 0;
+    this._value = this.value;
   }
 
-  async del() {
-    this.events.clear();
-    const stored = await this.getValue(true);
-    if (stored) this.store.del(this.path);
-    this.send('DEL');
+  defaultVal(val) {
+    return {
+      value: val?.value || val,
+      owner: val?.owner || this.user.uid,
+      path: this.path,
+      readers: val?.readers || this.readers,
+      updated: utc(),
+      updatedBy: val?.updatedBy || this.user.uid,
+      writers: val?.writers || this.writers,
+      // eslint-disable-next-line no-plusplus
+      version: val?.version || ++this.version,
+    };
   }
 
-  async getValue(raw = false) {
-    const stored = await this.store.get(this.path);
-
-    this.version = stored?.version || this.version;
-
-    if (stored && canRead(this.owner, stored)) {
-      if (raw) return stored;
-      return stored.value;
-    }
-    return null;
-  }
-
-  async load() {
-    try {
-      const val = await this.getValue(true);
-      this.events.emit(this.path, val?.value ? val.value : val);
-      if (this.wsc && this.wsc.ready && this.wsc.ready()) {
-        const payload = { action: 'GET', path: this.path, data: val };
-        this.wsc.send(payload);
-      }
-    } catch (err) {
-      // eat it
-    }
-  }
-
-  async send(action = 'GET') {
+  async send({ action = 'GET', value = {} }) {
     if (this?.wsc?.send) {
-      const val = await this.getValue(true);
-      const payload = { ...{ action, path: this.path }, ...val };
+      const payload = { ...{ action, path: this.path }, ...value };
       this.wsc.send(payload);
     }
   }
 
-  storeEmitAndSend(data, includeNet = false) {
+  async storeEmitAndSend(data, includeNet = false) {
+    this._value = data;
     this.store.put(this.path, data, true);
-    this.events.emit(this.path, data.value);
-    if (includeNet) this.send('PUT');
+    if (isArray(data?.value)) {
+      if (data.value.some((el) => refRegX.test(el))) {
+        const v = data.value.map((el) => {
+          const node = this.nodes.get(el);
+          return node?.value;
+        });
+        this.events.emit(this.path, v);
+      } else if (data.value.some((el) => el.includes('.'))) {
+        const v = data.value.map((el) => {
+          const node = this.nodes.get(el);
+          return node?.value;
+        });
+        this.events.emit(this.path, v);
+      }
+    } else {
+      this.events.emit(this.path, data.value);
+    }
+    if (includeNet) this.send({ action: 'PUT', value: data });
   }
 
-  async setValue(val, response) {
-    const data = response || {
-      value: val,
-      owner: this.owner,
-      path: this.path,
-      readers: this.readers,
-      updated: utc(),
-      updatedBy: this.owner.uid,
-      writers: this.writers,
-      // eslint-disable-next-line no-plusplus
-      version: ++this.version,
-    };
-    const stored = await this.store.get(this.path);
-    if (stored && canWrite(this.owner, stored)) {
-      this.storeEmitAndSend(data, true);
-    } else if (response) this.storeEmitAndSend(data, true);
-    else this.storeEmitAndSend(data);
+  get value() {
+    const current = this._value || this.defaultVal();
+    // possibly send a request to the server to get the latest
+    this.send({ value: current });
+
+    // possibly get it from IndexedDB
+    if (!current?.value) {
+      this.store.get(this.path).then((val) => {
+        if (val) this.value = val;
+      });
+    }
+    if (current && canRead(this.user.uid, current)) {
+      return current.value;
+    }
+    return null;
+  }
+
+  set value(val) {
+    if (val?.action === 'DELETE') {
+      this.store.del(this.path);
+      this.events.emit(this.path, null);
+      this.send({ ...val, ...{ path: this.path } });
+    } else if (!deepEquals(this._value, val)) {
+      let saveToNet = true;
+      const data = this.defaultVal(val);
+      saveToNet = !val?.action?.includes('RESPONSE');
+      const current = this._value;
+      if (current && canWrite(this.user.uid, current)) {
+        this.storeEmitAndSend(data, saveToNet);
+      } else this.storeEmitAndSend(data, saveToNet);
+    }
   }
 }
