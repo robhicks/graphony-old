@@ -1,18 +1,18 @@
-import { Graphony } from './Graphony';
-import { WebSocketClient } from './WebSocketClient'
-import baseUrl from './utils/baseUrl';
-import { expect } from 'chai';
+import { GraphonyClient } from '../../src/GraphonyClient';
+import baseUrl from '../../src/utils/baseUrl';
 
-describe.only('Graphony', () => {
-  const url = baseUrl().replace('8080', '8081').replace('http', 'ws');
-  const wsc = new WebSocketClient(url)
+describe.only('GraphonyClient', () => {
+
+  const url = baseUrl().replace('37367', '8081').replace('http', 'ws');
+  console.log(`url`, url)
   let graphony;
 
   beforeEach(() => {
-    graphony = new Graphony({wsc});
+    graphony = new GraphonyClient({ url });
+    window.graphony = graphony;
   });
   afterEach(async() => {
-    await graphony.reset();
+    // await graphony.reset();
   });
 
   it('when instantiated should have certain properties', () => {
@@ -90,31 +90,10 @@ describe.only('Graphony', () => {
         expect(val.name).to.equal('timothy')
         done()
       })
-      graphony.wsc.send({
-        action: 'DEL',
-        owner: "cfea0535-6e76-4e63-ab0e-f552a9ff9157",
-        path: "root.users.timothy",
-        readers: [],
-        updated: 1623814377,
-        updatedBy: "cfea0535-6e76-4e63-ab0e-f552a9ff9157",
-        value: null,
-        version: 1,
-        writers: []
-      })
-      graphony.wsc.send({
-        action: 'GET',
-        owner: "cfea0535-6e76-4e63-ab0e-f552a9ff9157",
-        path: "root.users.timothy",
-        readers: [],
-        updated: 1623814377,
-        updatedBy: "cfea0535-6e76-4e63-ab0e-f552a9ff9157",
-        value: { name: 'timothy' },
-        version: 1,
-        writers: []
-      })
+     
     });
 
-    it.only('should PUT data to the server', () => {
+    it('should PUT data to the server', () => {
       const obj = { name: 'rob' };
       graphony
         .get()

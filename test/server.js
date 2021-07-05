@@ -1,21 +1,11 @@
-const http = require('http');
-jwt = require('jsonwebtoken');
 const level = require('level');
-const { Graphony, LevelKeyStore, WebsocketServer } = require('../index.js');
-const ws = require('ws');
+const { GraphonyServer, LevelKeyStore } = require('../index.js');
 const { resolve } = require('path');
 const root = process.cwd();
+const fastify = require('fastify')();
+fastify.register(require('fastify-websocket'))
 
-const WebSocket = ws;
-const server = http.createServer();
-const wss = new WebSocket.Server({ server });
 const store = new LevelKeyStore(level, resolve(root, 'GraphonyDb'));
 
-const wss1 = new WebsocketServer({
-  port: 8081,
-  server,
-  store,
-  wss
-})
+new GraphonyServer({server: fastify, port: 3001, store});
 
-new Graphony({ wss: wss1 });

@@ -16,13 +16,14 @@ const canWrite = (currentUser, storedData) => currentUser === storedData.owner
 const refRegX = new RegExp('^ref:');
 
 export default class Node {
-  constructor(path, ctx, { readers = [], writers = [] } = []) {
+  constructor(path, ctx, readers = [], writers = []) {
     this.browser = isBrowser;
     this.server = !isBrowser;
     this.path = path;
     this.events = ctx.events;
     this.nodes = ctx.nodes;
-    this.nodeId = uuid();
+    this.uid = uuid();
+    this.gid = ctx.uuid;
     this.store = ctx.store;
     this.user = ctx.user;
     this.wsc = ctx.wsc;
@@ -30,31 +31,24 @@ export default class Node {
     this.readers = readers;
     this.writers = writers;
     this.version = 0;
-    this._value = this.value;
+    this.nextPaths = new Set();
   }
 
   defaultVal(val) {
     return {
       value: val?.value || val,
-      owner: val?.owner || this.user.uid,
+      owner: val?.owner || this?.user.uid,
       path: this.path,
       readers: val?.readers || this.readers,
       updated: utc(),
-      updatedBy: val?.updatedBy || this.user.uid,
+      updatedBy: val?.updatedBy || this?.user.uid,
       writers: val?.writers || this.writers,
       // eslint-disable-next-line no-plusplus
-      version: val?.version || ++this.version,
+      version: val?.version ? val.version + 1 : ++this.version,
     };
   }
 
-  async send({ action = 'GET', value = {} }) {
-    if (this?.wsc?.send) {
-      const payload = { ...{ action, path: this.path }, ...value };
-      this.wsc.send(payload);
-    }
-  }
-
-  async storeEmitAndSend(data, includeNet = false) {
+  async storeEmitAndSend(data, publish = false) {
     this._value = data;
     this.store.put(this.path, data, true);
     if (isArray(data?.value)) {
@@ -74,20 +68,16 @@ export default class Node {
     } else {
       this.events.emit(this.path, data.value);
     }
-    if (includeNet) this.send({ action: 'PUT', value: data });
+    if (publish) {
+      this.wsc.publish({
+        action: 'PUBLISH', data, gid: this.gid, path: this.path,
+      });
+    }
   }
 
   get value() {
     const current = this._value || this.defaultVal();
-    // possibly send a request to the server to get the latest
-    this.send({ value: current });
 
-    // possibly get it from IndexedDB
-    if (!current?.value) {
-      this.store.get(this.path).then((val) => {
-        if (val) this.value = val;
-      });
-    }
     if (current && canRead(this.user.uid, current)) {
       return current.value;
     }
@@ -95,18 +85,17 @@ export default class Node {
   }
 
   set value(val) {
+    let publish = false;
     if (val?.action === 'DELETE') {
       this.store.del(this.path);
       this.events.emit(this.path, null);
-      this.send({ ...val, ...{ path: this.path } });
+      this.wsc.delete({ gid: this.gid, path: this.path });
+    } else if (val?.action === 'LOAD_RESPONSE' || val?.action === 'PUBLISHED') {
+      this.storeEmitAndSend(val, publish);
     } else if (!deepEquals(this._value, val)) {
-      let saveToNet = true;
       const data = this.defaultVal(val);
-      saveToNet = !val?.action?.includes('RESPONSE');
-      const current = this._value;
-      if (current && canWrite(this.user.uid, current)) {
-        this.storeEmitAndSend(data, saveToNet);
-      } else this.storeEmitAndSend(data, saveToNet);
+      publish = true;
+      this.storeEmitAndSend(data, publish);
     }
   }
 }

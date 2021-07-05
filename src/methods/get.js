@@ -10,7 +10,6 @@ export default function get(path = 'root', { readers = [], writers = [] } = {}) 
     throw new SyntaxError('readers and writers must be arrays');
   }
 
-  this.previousPath = this.currentPath;
   if (/\./.test(path)) this.currentPath = path;
   else {
     if (path === 'root') this.currentPath = path;
@@ -25,8 +24,14 @@ export default function get(path = 'root', { readers = [], writers = [] } = {}) 
   }
 
   if (!this.nodes.has(this.currentPath)) {
-    const node = new Node(this.currentPath, this, { readers, writers });
+    const node = new Node(this.currentPath, this, readers, writers);
     this.nodes.add(this.currentPath, node);
+  }
+
+  const previousPath = this?.currentPath?.match(/(^.+)\./)?.[1];
+  if (previousPath) {
+    const previousNode = this.nodes.get(previousPath);
+    previousNode.nextPaths.add(this.currentPath);
   }
 
   return this;

@@ -3,14 +3,19 @@ import { uuid } from './utils/uuid';
 import encrypt from './utils/encrypt';
 import decrypt from './utils/decrypt';
 
+const userIdString = 'graphony-user-id';
+
 export default class User {
   constructor(ctx) {
     this._authenticated = false;
-    Object.assign(this, ctx);
-    this.uuid = uuid();
     this.jwt = null;
-    this.events.on('authChange', this.authChange);
     this._permissions = [];
+    this.uuid = sessionStorage.getItem(userIdString) || uuid();
+    sessionStorage.setItem(userIdString, this.uuid);
+    this.get = ctx.get.bind(ctx);
+    this.set = ctx.set.bind(ctx);
+    this.rpcClient = ctx.rpcClient;
+    this.rpcUri = ctx.rpcUri;
   }
 
   authChange(cb) {
@@ -60,6 +65,12 @@ export default class User {
     if (this.isBrowser && this?.wsc?.send) {
       this.wsc.send({ action: 'LOGOUT', data: { id: this.uid } });
       this.authenticated = false;
+    }
+  }
+
+  async uniqueEmail(email, cb) {
+    if (this.isBrowser) {
+      const emailUnique = this.rpcClient.request(this.rpcUri.query.set({}));
     }
   }
 

@@ -1,11 +1,11 @@
 import { Graphony } from '../Graphony.js';
-import { WebSocketClient } from '../WebSocketClient'
+import { WebsocketClient } from '../WebsocketClient'
 
 describe('set()', () => {
   let graphony;
 
   beforeEach(async () => {
-    const wsc = new WebSocketClient('ws://localhost:8081')
+    const wsc = new WebsocketClient('ws://localhost:8081')
     graphony = new Graphony({wsc});
   });
   afterEach(async () => {

@@ -1,4 +1,4 @@
-import IdbKeyValStore from './IdbKeyValStore';
+import {IdbKeyValStore} from './IdbKeyValStore';
 
 describe('IdbKeyValStore', () => {
   const store = new IdbKeyValStore('testDbName', 'testStoreName');

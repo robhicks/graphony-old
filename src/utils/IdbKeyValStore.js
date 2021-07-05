@@ -8,7 +8,7 @@ import { deepEquals } from './deepEquals';
 const defaultDbName = 'GraphonyDB';
 const defaultStoreName = 'GraphonyStore';
 
-export default class IdbKeyValStore {
+export class IdbKeyValStore {
   constructor(dbName, storeName) {
     this.store = createStore(dbName || defaultDbName, storeName || defaultStoreName);
   }

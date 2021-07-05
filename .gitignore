@@ -13,4 +13,5 @@ public/tests.js
 dist
 GraphonyDb
 index.js
+index.mjs
 test/server-test-bundle.js

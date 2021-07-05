@@ -1,16 +1,18 @@
-import { uuid } from './utils/uuid';
+import { deserialize } from './utils/deserialize';
+import { serialize } from './utils/serialize';
 import Node from './Node';
 
 const autoReconnectInterval = 2000;
-
-const deserialize = (payload) => JSON.parse(payload);
-const serialize = (payload) => JSON.stringify(payload);
+const maxRetries = 3;
+const retryInterval = 100;
 
 export class WebSocketClient {
   constructor(url) {
     this.intervalId = null;
     this.retryIntervalId = null;
+    this.subscriptions = new Set();
     this.url = url;
+    this.retries = 0;
     this.connect();
   }
 
@@ -24,6 +26,14 @@ export class WebSocketClient {
 
   connecting() {
     return this?.socket?.readyState === 0;
+  }
+
+  delete({ path, gid }) {
+    this.send({ action: 'DELETE', gid, path });
+  }
+
+  load({ path, gid }) {
+    this.send({ action: 'LOAD', gid, path });
   }
 
   onClose(ev) {
@@ -47,23 +57,32 @@ export class WebSocketClient {
   }
 
   onMessage(msg) {
-    console.log('Client::onMessage::msg', msg);
+    // console.log('Client::onMessage::msg', msg);
     const { data } = msg;
     // console.log('onMessage::data', data);
     const obj = deserialize(data);
-    console.log('onMessage::obj', obj);
+    // console.log('onMessage::obj', obj);
 
     const { path } = obj;
-    // console.log('path', path);
-    const { value } = obj;
+
     const node = this.nodes.get(path) || new Node(path, this.ctx);
     // console.log('node', node);
-    if (value) node.value = obj;
+    if (obj?.value) node.value = obj;
   }
 
   onOpen() {
+    console.log('connected');
     if (this.intervalId) clearInterval(this.intervalId);
-    this.socket.send(serialize({ action: 'REGISTER_CLIENT', data: { clientId: uuid() } }));
+    this.subscriptions.forEach((sub) => {
+      // console.log('sub', sub);
+      this.send(sub);
+    });
+  }
+
+  publish({ data, path, gid }) {
+    this.send({
+      action: 'PUBLISH', data, gid, path,
+    });
   }
 
   ready() {
@@ -74,19 +93,32 @@ export class WebSocketClient {
     if (this.intervalId) return;
     this.intervalId = setInterval(() => {
       // eslint-disable-next-line
-      console.log(`WebSocketClient: retry to ${this.url} in ${autoReconnectInterval}ms`);
+      console.log(`WebsocketClient: retry to ${this.url} in ${autoReconnectInterval}ms`);
       if (!this.ready() && !this.connecting()) this.connect();
     }, autoReconnectInterval);
   }
 
+  async rpc({ path, gid }) {
+    this.send({ action: 'RPC', gid, path });
+  }
+
   send(payload) {
+    // console.log('send::payload', payload);
     if (this.ready()) {
-      // console.log('WebSocketClient::send::payload', payload);
+      this.retries = 0;
+      // console.log('WebsocketClient::send::payload', payload);
       this.socket.send(serialize(payload));
-    } else {
+    } else if (this.retries < maxRetries) {
+      this.retries += 1;
       setTimeout(() => {
         this.send(payload);
-      }, 500);
+      }, retryInterval);
     }
+  }
+
+  subscribe({ path, gid }) {
+    const payload = { action: 'SUBSCRIBE', gid, path };
+    this.subscriptions.add(payload);
+    this.send(payload);
   }
 }

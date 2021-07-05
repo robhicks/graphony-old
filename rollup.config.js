@@ -1,27 +1,15 @@
-import { liveServer } from 'rollup-plugin-live-server';
 import nodeResolve from '@rollup/plugin-node-resolve';
-import commonJs from '@rollup/plugin-commonjs';
-
-const production = !process.env.ROLLUP_WATCH;
+import json from '@rollup/plugin-json';
 
 require('./test/makeTestEntry')();
 
 const plugins = [
+  json(),
   nodeResolve(),
-  commonJs(),
-  !production && liveServer({
-    port: 8080,
-    host: '0.0.0.0',
-    root: 'public',
-    file: 'index.html',
-    mount: [['/dist', './dist'], ['/src', './src'], ['/test', './test'], ['/node_modules', './node_modules']],
-    open: false,
-    wait: 500,
-  }),
 ];
 
-const client = './src/client.js';
-const server = './src/server.js';
+const client = './src/GraphonyClient.js';
+const server = './src/GraphonyServer.js';
 
 export default [
   {
@@ -41,25 +29,12 @@ export default [
     },
   },
   {
-    input: 'test/globals.js',
-    plugins: [
-      nodeResolve(),
-      commonJs(),
-    ],
+    input: server,
+    plugins,
     output: {
-      file: 'public/tests.js',
+      file: 'index.mjs',
       format: 'es',
     },
   },
-  {
-    input: 'test/server-tests.js',
-    plugins: [
-      nodeResolve(),
-      commonJs(),
-    ],
-    output: {
-      file: 'test/server-test-bundle.js',
-      format: 'cjs',
-    },
-  },
+
 ];
