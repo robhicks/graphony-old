@@ -18,6 +18,9 @@
   },
   "license": "UNLICENSED",
   "dependencies": {
+    "@rollup/plugin-commonjs": "^19.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^13.0.0",
     "cors": "https://github.com/robhicks/cors.git",
     "express": "^4.17.1",
     "fastify": "^3.18.1",
@@ -30,27 +33,22 @@
     "nano": "^9.0.3",
     "polka": "https://github.com/robhicks/polka.git",
     "pubsub-ws": "^1.0.3",
+    "rollup": "^2.52.7",
     "tiny-fetch-interceptors": "^1.0.5",
     "tiny-uri": "^9.1.3",
-    "trouter": "^3.2.0",
     "ws": "https://github.com/robhicks/ws"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "^19.0.0",
-    "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^13.0.0",
     "chai": "^4.3.4",
     "cypress": "^7.6.0",
     "del": "^6.0.0",
-    "eslint": "^7.29.0",
+    "eslint": "^7.30.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.23.4",
     "eslint-plugin-json-format": "^2.0.1",
-    "mocha": "9.0.1",
-    "nodemon": "^2.0.8",
+    "mocha": "9.0.2",
+    "nodemon": "^2.0.9",
     "npm-run-all": "^4.1.5",
-    "rollup": "^2.52.3",
-    "rollup-plugin-commonjs": "^10.1.0",
     "sinon": "^11.1.1"
   }
 }
