@@ -4,26 +4,20 @@ import Node from '../Node';
 
 export default function set(value) {
   const currentNode = this.nodes.get(this.currentPath);
-  (async (val) => {
-    try {
-      if (isArray(val)) {
-        await currentNode.setValue([]);
-        const temp = [];
-        val.forEach((v) => {
-          const ref = `ref:${uuid()}`;
-          const path = `${this.currentPath}.${ref}`;
-          const newNode = new Node(path, this);
-          this.nodes.add(path, newNode);
-          newNode.setValue(v);
-          temp.push(ref);
-        });
-        await currentNode.setValue(temp);
-      } else {
-        await currentNode.setValue(val);
-      }
-    } catch (err) {
-      // eat it
-    }
-  })(value);
+
+  if (isArray(value)) {
+    currentNode.value = [];
+    const temp = [];
+    value.forEach((v) => {
+      const path = `ref:${uuid()}`;
+      const newNode = new Node(path, this);
+      this.nodes.add(path, newNode);
+      newNode.value = v;
+      temp.push(path);
+    });
+    currentNode.value = temp;
+  } else {
+    currentNode.value = value;
+  }
   return this;
 }

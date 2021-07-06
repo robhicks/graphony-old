@@ -15,7 +15,7 @@ describe('del()', () => {
     expect(graphony.del).to.exist;
   });
 
-  it('should delete an object stored at the root of the state manager', () => {
+  it('should delete an object stored at the root', () => {
     graphony.get().set({ name: 'foo', location: 'bar' }).del().once((val) => expect(val).to.be.null);
   });
 
@@ -25,25 +25,34 @@ describe('del()', () => {
       .get('users')
       .get('joe')
       .set({ name: 'foo', location: 'bar' })
+      .once((val) => {
+        // console.log(`val`, val)
+        expect(val).to.be.null
+      })
       .del()
-      .once((val) => expect(val).to.be.null);
   });
 
-  it('should delete an array stored at the root of the db', () => {
+  it('should delete an array stored at the root', () => {
     graphony
       .get()
       .set([{ name: 'foo', location: 'bar' }])
+      .once((val) => {
+        // console.log(`val`, val)
+        expect(val).to.be.null
+      })
       .del()
-      .once((val) => expect(val).to.be.null);
   });
 
-  it('should delete an array stored deeply in the db', () => {
+  it('should delete an array stored deeply', () => {
     graphony
       .get()
       .get('users')
       .get('joe')
       .set([{ name: 'foo', location: 'bar' }])
+      .once((val) => {
+        // console.log(`val`, val)
+        expect(val).to.be.null
+      })
       .del()
-      .once((val) => expect(val).to.be.null);
   });
 });

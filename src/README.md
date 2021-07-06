@@ -25,6 +25,17 @@
  the client runs in a headless mode. It cannot be used to create users or add listeners for root, system or users. It has an anonymous user but is 
  running headless, which means it is only useful for persisting data in the client where it is running.
 
+ Need to project against:
+ - user data in browser being stolen by someone else who has access to browser
+ - users accessing data from the server (or other node) when they don't have rights
+
+
+ Here are some thoughts. When a user first authenticates, we can store a hash of the user's username and password. 
+
+
+
+ We can use this hash to authenticate a user who is offline. We just have the user log in again, generate the hash and compare it with stored hash. 
+
  # synchronization
 
  All nodes register a listener on a server. 
@@ -40,3 +51,5 @@
   - compare sizes and assign weights
 
  Use Brain.js to resolve conflicts. 
+
+

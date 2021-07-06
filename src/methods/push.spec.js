@@ -47,7 +47,7 @@ describe('push()', () => {
     };
 
     graphony.get().get('rob').set(rob);
-    graphony.get().get('users').set([]).push('root.rob')
+    graphony.get().get('users').set([]).push(rob)
       .once((val) => expect(val).to.be.eql([rob]));
   });
 });

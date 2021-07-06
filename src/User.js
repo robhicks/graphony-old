@@ -1,12 +1,21 @@
+import { isArray } from './utils/isArray';
 import { uuid } from './utils/uuid';
+import encrypt from './utils/encrypt';
+import decrypt from './utils/decrypt';
+
+const userIdString = 'graphony-user-id';
 
 export default class User {
   constructor(ctx) {
     this._authenticated = false;
-    Object.assign(this, ctx);
-    this.uid = uuid();
     this.jwt = null;
-    this.events.on('authChange', this.authChange);
+    this._permissions = [];
+    this.uuid = sessionStorage.getItem(userIdString) || uuid();
+    sessionStorage.setItem(userIdString, this.uuid);
+    this.get = ctx.get.bind(ctx);
+    this.set = ctx.set.bind(ctx);
+    this.rpcClient = ctx.rpcClient;
+    this.rpcUri = ctx.rpcUri;
   }
 
   authChange(cb) {
@@ -43,8 +52,12 @@ export default class User {
   }
 
   login(username, password) {
-    if (this.isBrowser && this?.wsc?.send) {
-      this.wsc.send({ action: 'LOGIN', data: { username, password, id: this.uid } });
+    if (this.isBrowser) {
+      if (this?.wsc && this.wsc.ready()) {
+        this.wsc.send({ action: 'LOGIN', data: { username, password, id: this.uid } });
+      } else {
+        // log user in
+      }
     }
   }
 
@@ -52,6 +65,12 @@ export default class User {
     if (this.isBrowser && this?.wsc?.send) {
       this.wsc.send({ action: 'LOGOUT', data: { id: this.uid } });
       this.authenticated = false;
+    }
+  }
+
+  async uniqueEmail(email, cb) {
+    if (this.isBrowser) {
+      const emailUnique = this.rpcClient.request(this.rpcUri.query.set({}));
     }
   }
 
@@ -71,4 +90,27 @@ export default class User {
     this._authenticated = flag;
     this.events.emit('authChange', this._authenticated);
   }
+
+  get permissions() {
+    return this._permissions;
+  }
+
+  set permissions(perms = []) {
+    if (!isArray(perms)) throw new SyntaxError('permissions must be an array of strings');
+    perms.forEach((perm) => {
+      if (typeof perm !== 'string') throw new SyntaxError('permissions must contain only strings');
+    });
+    this._permissions = perms;
+  }
+
+  get uid() {
+    return this.uuid;
+  }
+
+  set uid(uid) {
+    this.uuid = uid;
+  }
 }
+
+User.prototype.encrypt = encrypt;
+User.prototype.decrypt = decrypt;

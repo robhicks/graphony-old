@@ -1,78 +1,101 @@
-import isEqual from 'lodash.isequal';
 import { uuid } from './utils/uuid';
 import isBrowser from './utils/isBrowser';
+import { deepEquals } from './utils/deepEquals';
+import { isArray } from './utils/isArray';
 
 const utc = () => Math.floor(new Date().getTime() / 1000);
 
+const canRead = (currentUser, storedData) => currentUser === storedData.owner
+  || storedData.readers.includes(currentUser)
+  || storedData.readers.includes('all')
+  || storedData.writers.includes(currentUser);
+
+const canWrite = (currentUser, storedData) => currentUser === storedData.owner
+  || storedData.writers.includes(currentUser);
+
+const refRegX = new RegExp('^ref:');
+
 export default class Node {
-  constructor(path, ctx) {
+  constructor(path, ctx, readers = [], writers = []) {
     this.browser = isBrowser;
     this.server = !isBrowser;
     this.path = path;
     this.events = ctx.events;
-    this.nodeId = uuid();
+    this.nodes = ctx.nodes;
+    this.uid = uuid();
+    this.gid = ctx.uuid;
     this.store = ctx.store;
+    this.user = ctx.user;
     this.wsc = ctx.wsc;
     this.wss = ctx.wss;
-    this.user = ctx.user;
-    this.load();
+    this.readers = readers;
+    this.writers = writers;
     this.version = 0;
+    this.nextPaths = new Set();
   }
 
-  async del() {
-    this.events.clear();
-    const stored = await this.getValue(true);
-    if (stored) this.store.del(this.path);
-    this.send('DEL');
+  defaultVal(val) {
+    return {
+      value: val?.value || val,
+      owner: val?.owner || this?.user.uid,
+      path: this.path,
+      readers: val?.readers || this.readers,
+      updated: utc(),
+      updatedBy: val?.updatedBy || this?.user.uid,
+      writers: val?.writers || this.writers,
+      // eslint-disable-next-line no-plusplus
+      version: val?.version ? val.version + 1 : ++this.version,
+    };
   }
 
-  async getValue(raw = false) {
-    const stored = await this.store.get(this.path);
-    this.version = stored?.version || this.version;
-    if (stored) {
-      if (raw) return stored;
-      return stored.value;
+  async storeEmitAndSend(data, publish = false) {
+    this._value = data;
+    this.store.put(this.path, data, true);
+    if (isArray(data?.value)) {
+      if (data.value.some((el) => refRegX.test(el))) {
+        const v = data.value.map((el) => {
+          const node = this.nodes.get(el);
+          return node?.value;
+        });
+        this.events.emit(this.path, v);
+      } else if (data.value.some((el) => el.includes('.'))) {
+        const v = data.value.map((el) => {
+          const node = this.nodes.get(el);
+          return node?.value;
+        });
+        this.events.emit(this.path, v);
+      }
+    } else {
+      this.events.emit(this.path, data.value);
+    }
+    if (publish) {
+      this.wsc.publish({
+        action: 'PUBLISH', data, gid: this.gid, path: this.path,
+      });
+    }
+  }
+
+  get value() {
+    const current = this._value || this.defaultVal();
+
+    if (current && canRead(this.user.uid, current)) {
+      return current.value;
     }
     return null;
   }
 
-  async load() {
-    try {
-      const val = await this.getValue(true);
-      this.events.emit(this.path, val?.value ? val.value : val);
-      if (this.wsc && this.wsc.ready && this.wsc.ready()) {
-        const payload = { action: 'GET', path: this.path, data: val };
-        this.wsc.send(payload);
-      }
-    } catch (err) {
-      // eat it
-    }
-  }
-
-  async send(action = 'GET') {
-    if (this?.wsc?.send) {
-      const val = await this.getValue(true);
-      const payload = { ...{ action, path: this.path }, ...val };
-      this.wsc.send(payload);
-    }
-  }
-
-  async setValue(val, response) {
-    if (!response) {
-      const data = {
-        value: val,
-        path: this.path,
-        updated: utc(),
-        updatedBy: this.user.uid,
-        // eslint-disable-next-line no-plusplus
-        version: ++this.version,
-      };
-      this.store.put(this.path, data, true);
-      this.events.emit(this.path, data.value);
-      this.send('PUT');
-    } else {
-      this.store.put(this.path, response, true);
-      this.events.emit(this.path, val);
+  set value(val) {
+    let publish = false;
+    if (val?.action === 'DELETE') {
+      this.store.del(this.path);
+      this.events.emit(this.path, null);
+      this.wsc.delete({ gid: this.gid, path: this.path });
+    } else if (val?.action === 'LOAD_RESPONSE' || val?.action === 'PUBLISHED') {
+      this.storeEmitAndSend(val, publish);
+    } else if (!deepEquals(this._value, val)) {
+      const data = this.defaultVal(val);
+      publish = true;
+      this.storeEmitAndSend(data, publish);
     }
   }
 }

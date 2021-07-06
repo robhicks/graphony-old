@@ -1,7 +1,15 @@
+import { isArray } from '../utils/isArray';
+import { membersAreStrings } from '../utils/membersAreStrings';
 import Node from '../Node';
 
-export default function get(path = 'root') {
-  this.previousPath = this.currentPath;
+export default function get(path = 'root', { readers = [], writers = [] } = {}) {
+  if (!isArray(readers)
+  || !isArray(writers)
+  || !membersAreStrings(readers)
+  || !membersAreStrings(writers)) {
+    throw new SyntaxError('readers and writers must be arrays');
+  }
+
   if (/\./.test(path)) this.currentPath = path;
   else {
     if (path === 'root') this.currentPath = path;
@@ -14,8 +22,17 @@ export default function get(path = 'root') {
       this.currentPath = `${this.currentPath || 'root'}.${path}`;
     }
   }
-  const node = new Node(this.currentPath, this);
-  this.nodes.add(this.currentPath, node);
+
+  if (!this.nodes.has(this.currentPath)) {
+    const node = new Node(this.currentPath, this, readers, writers);
+    this.nodes.add(this.currentPath, node);
+  }
+
+  const previousPath = this?.currentPath?.match(/(^.+)\./)?.[1];
+  if (previousPath) {
+    const previousNode = this.nodes.get(previousPath);
+    previousNode.nextPaths.add(this.currentPath);
+  }
 
   return this;
 }

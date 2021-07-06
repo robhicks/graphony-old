@@ -30,9 +30,9 @@ export class LevelKeyStore {
   async get(key) {
     try {
       const val = await this.db.get(key);
-      return JSON.parse(JSON.parse(val));
+      return JSON.parse(val);
     } catch (err) {
-      // console.log('level get err', err);
+      console.log('level get err', err);
       return null;
     }
   }

@@ -43,12 +43,6 @@ describe('EventEmitter', () => {
     expect(events).to.not.be.equal(events1);
   });
 
-  it('should create an optional singleton', () => {
-    events = new EventEmitter({ singleton: true });
-    const events1 = new EventEmitter({ singleton: true });
-    expect(events).to.be.equal(events1);
-  });
-
   it('should not create duplicate event listeners', () => {
     const cb = () => {};
 

@@ -1,4 +1,6 @@
 export default function del() {
-  this.nodes.delete(this.currentPath);
+  const node = this.nodes.get(this.currentPath);
+  node.value = { action: 'DELETE' };
+
   return this;
 }

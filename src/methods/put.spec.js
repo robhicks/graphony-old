@@ -16,18 +16,21 @@ describe('put()', () => {
     expect(graphony.put).to.exist;
   });
 
-  it('should patch an object', () => {
+  it('should patch an object', (done) => {
     const set = { name: 'foo' };
     const put = { location: 'bar' };
     const obj = { name: 'foo', location: 'bar' };
     graphony
       .get()
       .set(set)
+      .once((val) => {
+        expect(val).to.be.eql(obj)
+        done()
+      })
       .put(put)
-      .once((val) => expect(val).to.be.eql(obj));
   });
 
-  it('should patch an object in a deeply nested node', () => {
+  it('should patch an object in a deeply nested node', (done) => {
     const set = { name: 'foo' };
     const put = { location: 'bar' };
     const obj = { name: 'foo', location: 'bar' };
@@ -36,7 +39,10 @@ describe('put()', () => {
       .get('users')
       .get('rob')
       .set(set)
+      .once((val) => {
+        expect(val).to.be.eql(obj);
+        done();
+      })
       .put(put)
-      .once((val) => expect(val).to.be.eql(obj));
   });
 });

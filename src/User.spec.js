@@ -2,7 +2,7 @@ import { Graphony } from './Graphony';
 import { expect } from 'chai';
 import User from './User'
 
-describe.only('User', () => {
+describe('User', () => {
   let graphony;
   before(() => {
     graphony = new Graphony();
