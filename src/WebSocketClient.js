@@ -24,16 +24,8 @@ export class WebSocketClient {
     this.socket.addEventListener('open', this.onOpen.bind(this));
   }
 
-  connecting() {
-    return this?.socket?.readyState === 0;
-  }
-
   delete({ path, gid }) {
     this.send({ action: 'DELETE', gid, path });
-  }
-
-  load({ path, gid }) {
-    this.send({ action: 'LOAD', gid, path });
   }
 
   onClose(ev) {
@@ -53,7 +45,7 @@ export class WebSocketClient {
   onError(evt) {
     // eslint-disable-next-line
     console.warn('evt', evt);
-    this.reconnect();
+    this.socket.close();
   }
 
   onMessage(msg) {
@@ -79,22 +71,19 @@ export class WebSocketClient {
     });
   }
 
-  publish({ data, path, gid }) {
-    this.send({
-      action: 'PUBLISH', data, gid, path,
-    });
+  publish(data) {
+    this.send(data);
   }
 
   ready() {
-    return this?.socket?.readyState === 1;
+    return this?.socket?.readyState === 1 && this?.socket?.readyState !== 0;
   }
 
   reconnect() {
-    if (this.intervalId) return;
-    this.intervalId = setInterval(() => {
-      // eslint-disable-next-line
-      console.log(`WebsocketClient: retry to ${this.url} in ${autoReconnectInterval}ms`);
-      if (!this.ready() && !this.connecting()) this.connect();
+    console.count('reconnect');
+    console.log(`Socket closed: retry to ${this.url} in ${autoReconnectInterval}ms`);
+    setTimeout(() => {
+      this.connect();
     }, autoReconnectInterval);
   }
 

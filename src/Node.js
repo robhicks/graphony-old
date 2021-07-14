@@ -2,6 +2,7 @@ import { uuid } from './utils/uuid';
 import isBrowser from './utils/isBrowser';
 import { deepEquals } from './utils/deepEquals';
 import { isArray } from './utils/isArray';
+import resolver from './utils/resolver';
 
 const utc = () => Math.floor(new Date().getTime() / 1000);
 
@@ -32,20 +33,32 @@ export default class Node {
     this.writers = writers;
     this.version = 0;
     this.nextPaths = new Set();
+    (async () => {
+      try {
+        const localVal = await this.store.get(this.path);
+        if (localVal) this.value = { ...localVal, ...{ action: 'LOCAL_GET' } };
+      } catch (error) {
+        console.error('error', error);
+      }
+    })();
   }
 
   defaultVal(val) {
-    return {
-      value: val?.value || val,
-      owner: val?.owner || this?.user.uid,
-      path: this.path,
-      readers: val?.readers || this.readers,
-      updated: utc(),
-      updatedBy: val?.updatedBy || this?.user.uid,
-      writers: val?.writers || this.writers,
-      // eslint-disable-next-line no-plusplus
-      version: val?.version ? val.version + 1 : ++this.version,
+    const retVal = {
+      ...val,
+      ...{
+        owner: val?.owner || this?.user.uid,
+        readers: val?.readers || this.readers,
+        updated: val?.updated || utc(),
+        updatedBy: val?.updatedBy || this?.user.uid,
+        writers: val?.writers || this.writers,
+      },
     };
+    if (val?.action !== 'LOAD_RESPONSE') {
+      if (val.version) retVal.version = val.version + 1;
+    }
+    // console.log('retVal', retVal);
+    return retVal;
   }
 
   async storeEmitAndSend(data, publish = false) {
@@ -69,9 +82,9 @@ export default class Node {
       this.events.emit(this.path, data.value);
     }
     if (publish) {
-      this.wsc.publish({
-        action: 'PUBLISH', data, gid: this.gid, path: this.path,
-      });
+      const d = { ...data, ...{ action: 'PUBLISH', gid: this.gid, path: this.path } };
+      // console.log('d', d);
+      this.wsc.publish(d);
     }
   }
 
@@ -85,17 +98,28 @@ export default class Node {
   }
 
   set value(val) {
-    let publish = false;
-    if (val?.action === 'DELETE') {
+    // console.log('val', val);
+    const value = this.defaultVal(val);
+    // value = resolver({ updated: this.updated, value: this._value, version: this.version }, value);
+    const { action } = value;
+    console.log('action', action);
+    switch (action) {
+    case 'DELETE':
       this.store.del(this.path);
       this.events.emit(this.path, null);
       this.wsc.delete({ gid: this.gid, path: this.path });
-    } else if (val?.action === 'LOAD_RESPONSE' || val?.action === 'PUBLISHED') {
-      this.storeEmitAndSend(val, publish);
-    } else if (!deepEquals(this._value, val)) {
-      const data = this.defaultVal(val);
-      publish = true;
-      this.storeEmitAndSend(data, publish);
+      break;
+    case 'LOCAL_GET':
+      this.storeEmitAndSend(value, false);
+      break;
+    case 'PUBLISHED': break;
+    case 'PUT':
+      this.storeEmitAndSend(value, true);
+      break;
+    case 'SERVER_GET':
+      this.storeEmitAndSend(value, false);
+      break;
+    default: break;
     }
   }
 }

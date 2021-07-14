@@ -5,7 +5,11 @@ export default function put(val) {
   // eslint-disable-next-line prefer-destructuring
   const value = node.value;
   const nVal = copy(val);
-  const v = { ...value, ...nVal };
+  // const v = { ...value, ...nVal, ...{ action: 'PUT' } };
+  let v = Object.assign(value, nVal);
+  v = { value: v, action: 'PUT' };
+
+  // console.log('v', v);
   node.value = v;
   return this;
 }
